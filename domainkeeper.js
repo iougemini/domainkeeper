@@ -1,5 +1,5 @@
 // 在文件顶部添加版本信息后台密码（不可为空）
-const VERSION = "1.7.0";
+const VERSION = "1.8.0";
 
 // 自定义标题
 const CUSTOM_TITLE = "我的域名管理";
@@ -8,7 +8,12 @@ const CUSTOM_TITLE = "我的域名管理";
 const CF_API_KEYS = [
   "", //user1
   "" //user2
-  //...
+];
+
+// 对应的用户名数组
+const USERNAMES = [
+  "", // username1
+  "" // username2
 ];
 
 // 自建 WHOIS 代理服务地址
@@ -283,7 +288,10 @@ async function handleApiUpdate(request) {
 async function fetchCloudflareDomainsInfo() {
   let allDomains = [];
 
-  for (const apiKey of CF_API_KEYS) {
+  for (let i = 0; i < CF_API_KEYS.length; i++) {
+    const apiKey = CF_API_KEYS[i];
+    const username = USERNAMES[i]; // 获取对应的用户名
+
     try {
       const response = await fetch('https://api.cloudflare.com/client/v4/zones', {
         headers: {
@@ -307,7 +315,8 @@ async function fetchCloudflareDomainsInfo() {
         domain: zone.name,
         registrationDate: new Date(zone.created_on).toISOString().split('T')[0],
         system: 'Cloudflare',
-
+        apiKey: apiKey, // 添加 apiKey 字段
+        username: username // 添加用户名字段
       }));
 
       allDomains = allDomains.concat(domains);
@@ -547,13 +556,18 @@ function getStatusTitle(daysRemaining) {
 }
 
 function generateHTML(domains, isAdmin) {
-  const categorizedDomains = categorizeDomains(domains);
-  console.log("Categorized domains:", categorizedDomains);
 
 
 
 
-
+  const groupedDomains = {};
+  domains.forEach(domain => {
+    const key = domain.apiKey; // 假设每个域名有对应的 apiKey
+    if (!groupedDomains[key]) {
+      groupedDomains[key] = [];
+    }
+    groupedDomains[key].push(domain);
+  });
 
   const generateTable = (domainList) => `
     <table>
@@ -578,7 +592,7 @@ function generateHTML(domains, isAdmin) {
           const totalDays = (expirationDate - registrationDate) / (1000 * 60 * 60 * 24);
           const daysRemaining = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
           const progress = ((totalDays - daysRemaining) / totalDays) * 100;
-          
+
           const statusColor = getStatusColor(daysRemaining);
           const statusTitle = getStatusTitle(daysRemaining);
 
@@ -612,7 +626,6 @@ function generateHTML(domains, isAdmin) {
     </table>
   `;
 
-  const adminLink = isAdmin ? '' : '<a href="/admin">管理后台</a>';
   const apiKeyCount = CF_API_KEYS.length;
 
   return `
@@ -644,72 +657,29 @@ function generateHTML(domains, isAdmin) {
         overflow-x: auto;
         width: 100%;
       }
-      
       table {
         width: 100%;
         table-layout: auto;
       }
-
       thead {
         position: sticky;
         top: 0;
         background-color: #f2f2f2;
         z-index: 1;
       }
-
       th, td {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         padding: 8px;
       }
-      
-      .status-column { width: 30px; min-width: 30px; max-width: 50px; }
+      .status-column { width: 30px; }
       .domain-column { max-width: 200px; }
       .system-column, .registrar-column { max-width: 150px; }
       .date-column { max-width: 100px; }
       .days-column { max-width: 80px; }
       .progress-column { max-width: 150px; }
       .operation-column { max-width: 200px; }
-      
-      @media (max-width: 768px) {
-        .container {
-          padding: 0 10px;
-        }
-      
-        table {
-          table-layout: auto;
-          font-size: 12px;
-        }
-        
-        th, td {
-          padding: 6px;
-        }
-      
-        .system-column, .registrar-column {
-          display: none;
-        }
-        
-        .domain-column, 
-        .date-column, 
-        .days-column, 
-        .progress-column, 
-        .operation-column { 
-          width: auto; 
-        }
-      
-        button {
-          padding: 3px 6px;
-          font-size: 12px;
-        }
-      }
-      
-      @media (min-width: 1921px) {
-        .container {
-          max-width: 1800px;
-        }
-      }
-
       .status-dot {
         display: inline-block;
         width: 10px;
@@ -727,26 +697,21 @@ function generateHTML(domains, isAdmin) {
         background-color: #4CAF50;
         transition: width 0.5s ease-in-out;
       }
-      button {
-        padding: 5px 10px;
-        margin: 2px;
-        cursor: pointer;
-      }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>${CUSTOM_TITLE}${isAdmin ? ' - 后台管理' : ''}</h1>
-      <div class="admin-link">${adminLink}</div>
-      <p>使用的 Cloudflare API 密钥数量: ${apiKeyCount}</p>
-
-      ${Object.entries(categorizedDomains).map(([category, domainList]) => `
-        <h2>${category}</h2>
-        <div class="table-wrapper">
-          ${generateTable(domainList)}
-        </div>
-      `).join('')}
-
+      ${Object.entries(groupedDomains).map(([key, domainList]) => {
+        const username = domainList[0]?.username || '未知账户'; // 显示对应的用户名
+        return `
+          <h2>账户: ${username}</h2>
+          <div class="table-wrapper">
+            ${generateTable(domainList)}
+          </div>
+        `;
+      }).join('')}
+      
       ${isAdmin ? `
         <h2>添加新域名</h2>
         <form id="addDomainForm">
@@ -773,347 +738,11 @@ function generateHTML(domains, isAdmin) {
         </div>
       ` : ''}
     </div>
-
-    ${isAdmin ? `
-    <script>
-    async function editDomain(domain, button) {
-      const row = button.closest('tr');
-      const cells = row.querySelectorAll('td');
-      
-      if (button.textContent === '编辑') {
-        button.textContent = '保存';
-        cells[2].innerHTML = '<input type="text" value="' + cells[2].textContent + '">';
-        cells[3].innerHTML = '<input type="text" value="' + cells[3].textContent + '">';
-        cells[4].innerHTML = '<input type="date" value="' + cells[4].textContent + '">';
-        cells[5].innerHTML = '<input type="date" value="' + cells[5].textContent + '">';
-      } else {
-        button.textContent = '编辑';
-        const updatedData = {
-          domain: domain,
-          system: cells[2].querySelector('input').value,
-          registrar: cells[3].querySelector('input').value,
-          registrationDate: cells[4].querySelector('input').value,
-          expirationDate: cells[5].querySelector('input').value
-        };
-
-        const response = await fetch('/api/update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
-          },
-          body: JSON.stringify(updatedData)
-        });
-
-        if (response.ok) {
-          cells[2].textContent = updatedData.system;
-          cells[3].textContent = updatedData.registrar;
-          cells[4].textContent = updatedData.registrationDate;
-          cells[5].textContent = updatedData.expirationDate;
-        } else {
-          alert('更新失败');
-        }
-      }
-    }
-
-    async function updateWhois(domain) {
-      const response = await fetch('/api/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
-        },
-        body: JSON.stringify({ action: 'update-whois', domain: domain })
-      });
-
-      if (response.ok) {
-        alert('WHOIS 信息更新成功');
-        location.reload();
-      } else {
-        alert('WHOIS 信息更新失败');
-      }
-    }
-
-    async function deleteDomain(domain) {
-      if (confirm('确定要删除该域名吗？')) {
-        const response = await fetch('/api/update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
-          },
-          body: JSON.stringify({ action: 'delete', domain: domain })
-        });
-
-        if (response.ok) {
-          alert('域名删除成功');
-          location.reload();
-        } else {
-          alert('域名删除失败');
-        }
-      }
-    }
-
-    document.getElementById('addDomainForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const newDomain = document.getElementById('newDomain').value;
-      const newSystem = document.getElementById('newSystem').value;
-      const newRegistrar = document.getElementById('newRegistrar').value;
-      const newRegistrationDate = document.getElementById('newRegistrationDate').value;
-      const newExpirationDate = document.getElementById('newExpirationDate').value;
-
-      const response = await fetch('/api/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
-        },
-        body: JSON.stringify({
-          action: 'add',
-          domain: newDomain,
-          system: newSystem,
-          registrar: newRegistrar,
-          registrationDate: newRegistrationDate,
-          expirationDate: newExpirationDate
-        })
-      });
-
-      if (response.ok) {
-        alert('新域名添加成功');
-        location.reload();
-      } else {
-        alert('新域名添加失败');
-      }
-    });
-
-    document.getElementById('addApiKeyForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const newApiKey = document.getElementById('newApiKey').value;
-
-      const response = await fetch('/api/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
-        },
-        body: JSON.stringify({
-          action: 'add-api-key',
-          apiKey: newApiKey
-        })
-      });
-
-      if (response.ok) {
-
-        alert('新 API 密钥添加成功');
-        location.reload();
-      } else {
-        alert('新 API 密钥添加失败');
-      }
-    });
-
-    async function deleteApiKey(index) {
-      if (confirm('确定要删除该 API 密钥吗？')) {
-        const response = await fetch('/api/update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
-          },
-          body: JSON.stringify({
-            action: 'delete-api-key',
-            index: index
-          })
-        });
-
-        if (response.ok) {
-          alert('API 密钥删除成功');
-          location.reload();
-        } else {
-          alert('API 密钥删除失败');
-        }
-
-      }
-    }
-    </script>
-    ` : ''}
-    ${footerHTML}
   </body>
   </html>
   `;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
+
 
 function categorizeDomains(domains) {
   const categories = {
