@@ -1,5 +1,5 @@
 // 在文件顶部添加版本信息后台密码（不可为空）
-const VERSION = "1.8.0";
+const VERSION = "1.8.1";
 
 // 自定义标题
 const CUSTOM_TITLE = "我的域名管理";
@@ -23,7 +23,7 @@ const WHOIS_PROXY_URL = "";
 const ACCESS_PASSWORD = "";
 
 // 后台密码（不可为空）
-const ADMIN_PASSWORD = "";
+const ADMIN_PASSWORD = "lgd123456";
 
 // KV 命名空间绑定名称
 const KV_NAMESPACE = DOMAIN_INFO;
@@ -55,7 +55,7 @@ const footerHTML = `
     padding: 10px 0;
     font-size: 14px;
   ">
-    Powered by DomainKeeper v${VERSION} <span style="margin: 0 10px;">|</span> © 2023 bacon159. All rights reserved.
+    Powered by DomainKeeper v${VERSION} <span style="margin: 0 10px;">|</span> © 2024 NieGe. All rights reserved.
   </footer>
 `;
 
@@ -480,6 +480,7 @@ function generateLoginHTML(title, action, errorMessage = "") {
   <html lang="zh-CN">
   <head>
     <meta charset="UTF-8">
+    <link rel="shortcut icon" href="https://img4.anyhub.us.kg/i/2024/1/1526a0af2f66abd8.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title} - ${CUSTOM_TITLE}</title>
     <style>
@@ -496,16 +497,17 @@ function generateLoginHTML(title, action, errorMessage = "") {
       margin: 0 auto;
       background-color: #fff;
       padding: 20px;
-      border-radius: 5px;
+      border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       margin-bottom: 60px;
     }
     .login-container {
       max-width: 300px;
-      margin: 50px auto;
+      text-align: center;
+      margin: 80px auto;
       padding: 20px;
       background-color: #fff;
-      border-radius: 5px;
+      border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
     input[type="password"], input[type="submit"] {
@@ -529,10 +531,10 @@ function generateLoginHTML(title, action, errorMessage = "") {
   </head>
   <body>
     <div class="login-container">
-      <h1>${title}</h1>
+      <h1 style="text-align: center;color: #03a9f4;">${title}</h1>
       ${errorMessage ? `<p class="error-message">${errorMessage}</p>` : ''}
       <form method="POST" action="${action}">
-        <input type="password" name="password" placeholder="请输入密码" required>
+        <input type="password" name="password" style="width: 92%;padding: 8px 10px;" placeholder="请输入密码" required>
         <input type="submit" value="登录">
       </form>
     </div>
@@ -634,7 +636,8 @@ function generateHTML(domains, isAdmin) {
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${CUSTOM_TITLE}${isAdmin ? ' - 后台管理' : ''}</title>
+    <link rel="shortcut icon" href="https://img4.anyhub.us.kg/i/2024/1/1526a0af2f66abd8.png">
+    <title>${CUSTOM_TITLE}${isAdmin ? ' - ADMIN' : ''}</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -649,7 +652,7 @@ function generateHTML(domains, isAdmin) {
         margin: 0 auto;
         background-color: #fff;
         padding: 20px;
-        border-radius: 5px;
+        border-radius: 10px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         margin-bottom: 60px;
       }
@@ -671,6 +674,8 @@ function generateHTML(domains, isAdmin) {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-align: center;
+        border-bottom: #e1e1e1 1px solid;
         padding: 8px;
       }
       .status-column { width: 30px; }
@@ -689,11 +694,11 @@ function generateHTML(domains, isAdmin) {
       .progress-bar {
         width: 100%;
         background-color: #e0e0e0;
-        border-radius: 5px;
+        /*border-radius: 5px;*/
         overflow: hidden;
       }
       .progress {
-        height: 20px;
+        height: 15px;
         background-color: #4CAF50;
         transition: width 0.5s ease-in-out;
       }
@@ -701,11 +706,11 @@ function generateHTML(domains, isAdmin) {
   </head>
   <body>
     <div class="container">
-      <h1>${CUSTOM_TITLE}${isAdmin ? ' - 后台管理' : ''}</h1>
+      <h1 style="text-align: center;color: #ffffff;background-color: #03a9f4;padding: 20px;margin: -20px -20px 30px -20px;border-radius: 10px 10px 0 0;">${CUSTOM_TITLE}${isAdmin ? ' - ADMIN' : ''}</h1>
       ${Object.entries(groupedDomains).map(([key, domainList]) => {
         const username = domainList[0]?.username || '未知账户'; // 显示对应的用户名
         return `
-          <h2>账户: ${username}</h2>
+          <h2 style="text-align: center;color: #673AB7">账户: ${username}</h2>
           <div class="table-wrapper">
             ${generateTable(domainList)}
           </div>
@@ -713,7 +718,7 @@ function generateHTML(domains, isAdmin) {
       }).join('')}
       
       ${isAdmin ? `
-        <h2>添加新域名</h2>
+        <h2 style="text-align: center;color: #673AB7">添加新域名</h2>
         <form id="addDomainForm">
           <input type="text" id="newDomain" placeholder="域名" required>
           <input type="text" id="newSystem" placeholder="系统">
@@ -723,7 +728,7 @@ function generateHTML(domains, isAdmin) {
           <button type="submit">添加域名</button>
         </form>
 
-        <h2>管理 Cloudflare API 密钥</h2>
+        <h2 style="text-align: center;color: #673AB7">管理 Cloudflare API 密钥</h2>
         <form id="addApiKeyForm">
           <input type="text" id="newApiKey" placeholder="新的 API 密钥" required>
           <button type="submit">添加 API 密钥</button>
@@ -738,6 +743,153 @@ function generateHTML(domains, isAdmin) {
         </div>
       ` : ''}
     </div>
+    ${isAdmin ? `
+    <script>
+    async function editDomain(domain, button) {
+      const row = button.closest('tr');
+      const cells = row.querySelectorAll('td');
+      
+      if (button.textContent === '编辑') {
+        button.textContent = '保存';
+        cells[2].innerHTML = '<input type="text" value="' + cells[2].textContent + '">';
+        cells[3].innerHTML = '<input type="text" value="' + cells[3].textContent + '">';
+        cells[4].innerHTML = '<input type="date" value="' + cells[4].textContent + '">';
+        cells[5].innerHTML = '<input type="date" value="' + cells[5].textContent + '">';
+      } else {
+        button.textContent = '编辑';
+        const updatedData = {
+          domain: domain,
+          system: cells[2].querySelector('input').value,
+          registrar: cells[3].querySelector('input').value,
+          registrationDate: cells[4].querySelector('input').value,
+          expirationDate: cells[5].querySelector('input').value
+        };
+        const response = await fetch('/api/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
+          },
+          body: JSON.stringify(updatedData)
+        });
+        if (response.ok) {
+          cells[2].textContent = updatedData.system;
+          cells[3].textContent = updatedData.registrar;
+          cells[4].textContent = updatedData.registrationDate;
+          cells[5].textContent = updatedData.expirationDate;
+        } else {
+          alert('更新失败');
+        }
+      }
+    }
+    async function updateWhois(domain) {
+      const response = await fetch('/api/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
+        },
+        body: JSON.stringify({ action: 'update-whois', domain: domain })
+      });
+      if (response.ok) {
+        alert('WHOIS 信息更新成功');
+        location.reload();
+      } else {
+        alert('WHOIS 信息更新失败');
+      }
+    }
+    async function deleteDomain(domain) {
+      if (confirm('确定要删除该域名吗？')) {
+        const response = await fetch('/api/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
+          },
+          body: JSON.stringify({ action: 'delete', domain: domain })
+        });
+        if (response.ok) {
+          alert('域名删除成功');
+          location.reload();
+        } else {
+          alert('域名删除失败');
+        }
+      }
+    }
+    document.getElementById('addDomainForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newDomain = document.getElementById('newDomain').value;
+      const newSystem = document.getElementById('newSystem').value;
+      const newRegistrar = document.getElementById('newRegistrar').value;
+      const newRegistrationDate = document.getElementById('newRegistrationDate').value;
+      const newExpirationDate = document.getElementById('newExpirationDate').value;
+      const response = await fetch('/api/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
+        },
+        body: JSON.stringify({
+          action: 'add',
+          domain: newDomain,
+          system: newSystem,
+          registrar: newRegistrar,
+          registrationDate: newRegistrationDate,
+          expirationDate: newExpirationDate
+        })
+      });
+      if (response.ok) {
+        alert('新域名添加成功');
+        location.reload();
+      } else {
+        alert('新域名添加失败');
+      }
+    });
+    document.getElementById('addApiKeyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newApiKey = document.getElementById('newApiKey').value;
+      const response = await fetch('/api/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
+        },
+        body: JSON.stringify({
+          action: 'add-api-key',
+          apiKey: newApiKey
+        })
+      });
+      if (response.ok) {
+        alert('新 API 密钥添加成功');
+        location.reload();
+      } else {
+        alert('新 API 密钥添加失败');
+      }
+    });
+    async function deleteApiKey(index) {
+      if (confirm('确定要删除该 API 密钥吗？')) {
+        const response = await fetch('/api/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + btoa(':' + '${ADMIN_PASSWORD}')
+          },
+          body: JSON.stringify({
+            action: 'delete-api-key',
+            index: index
+          })
+        });
+        if (response.ok) {
+          alert('API 密钥删除成功');
+          location.reload();
+        } else {
+          alert('API 密钥删除失败');
+        }
+      }
+    }
+    </script>
+    ` : ''}
+    ${footerHTML}
   </body>
   </html>
   `;
@@ -770,4 +922,3 @@ function categorizeDomains(domains) {
 
   return categories;
 }
-
